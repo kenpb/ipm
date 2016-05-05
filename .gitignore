@@ -1,0 +1,9 @@
+debug/
+bin/
+x64/
+release/
+ipch/
+packages/*
+!packages/repositories.config
+*.sdf
+*.opensdf
