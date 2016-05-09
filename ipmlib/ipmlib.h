@@ -19,7 +19,7 @@ namespace ipmlib {
 		ipm() { progress = 0; };
 		~ipm() {};
 		void createISO(System::String^ path);
-		System::UInt16 getProgress() { return progress; }
+		int getProgress() { return progress; }
 	private:
 		void slashReplace(std::string& path) {
 			auto lastcharacter = path.end() - 1;
@@ -42,6 +42,6 @@ namespace ipmlib {
 			auto size = elems.size();
 			return elems.at(size - 1);
 		}
-		System::UInt16 progress;
+		int progress;
 	};
 }

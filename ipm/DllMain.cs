@@ -1,5 +1,6 @@
 ﻿using System.Management.Automation;
 using System.Threading;
+using System;
 
 namespace ipm
 {
@@ -16,19 +17,31 @@ namespace ipm
             iso.createISO(this.path);
         }
 
+        private int GetProgress()
+        {
+            return iso.getProgress();
+        }
+
         protected override void ProcessRecord()
         {
-            var myprogress = new ProgressRecord(1, "Creating", "Progress:");
+            var myprogress = new ProgressRecord(1, "Creating: " + this.path + ".iso", "Progress:");
             var isothread = new Thread(Start);
             isothread.Start();
+
+            Console.WriteLine("Reading Target directory...");
             
             while (isothread.IsAlive)
             {
-                myprogress.PercentComplete = iso.getProgress();
-                WriteProgress(myprogress);
+                myprogress.PercentComplete = GetProgress();
+                Thread.Sleep(200);
+                if (myprogress.PercentComplete != 0)
+                {
+                    WriteProgress(myprogress);
+                }
             }
             
-            WriteObject("Done.");
+            WriteObject("Done...");
+            Console.Beep();
         }
     }
 }

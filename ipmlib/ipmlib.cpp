@@ -6,9 +6,13 @@
 
 namespace ipmlib {
 
+	// TODO:
+	// - Handle errors.
+	// - Get a better way to calculate the progress and chunks.
 	void ipm::createISO(System::String^ path) {
 		msclr::interop::marshal_context context;
 		auto std_path = context.marshal_as<std::string>(path);
+		auto full_for_console = std_path + ISO_EXT;
 		slashReplace(std_path);
 		auto std_isoName = getISOName(std_path);
 		auto std_full = std_path + ISO_EXT;
@@ -34,7 +38,7 @@ namespace ipmlib {
 		CoCreateInstance(CLSID_MsftFileSystemImage, NULL, CLSCTX_ALL, __uuidof(IFileSystemImage), (void**)&image);
 		image->put_FileSystemsToCreate((FsiFileSystems)(FsiFileSystemJoliet | FsiFileSystemISO9660));
 		image->put_VolumeName(bstr_isoName);
-		image->ChooseImageDefaultsForMediaType(IMAPI_MEDIA_TYPE_CDRW);
+		image->ChooseImageDefaultsForMediaType(IMAPI_MEDIA_TYPE_MAX);
 		image->get_Root(&root);
 		root->AddTree(bstr_path, VARIANT_TRUE);
 		image->CreateResultImage(&result);
@@ -45,11 +49,13 @@ namespace ipmlib {
 		float chunksize = (float)stg.cbSize.QuadPart / 100;
 		fopen_s(&f, std_full.c_str(), "wb");
 
-		while (!r_i->Read(data, (ULONG)chunksize, &size)) // do real calculation ffs
+		while (!r_i->Read(data, (ULONGLONG)chunksize, &size)) // do real calculation ffs
 		{
 			if (size != 0) {
 				fwrite(data, size, 1, f);
-				progress = (progress == 100) ? progress : progress++;
+				if (progress != 100) {
+					progress++;
+				}
 			}
 			else
 				break;
@@ -64,7 +70,7 @@ namespace ipmlib {
 
 		CoUninitialize();
 
-		std::cout << "Output file at: " << std_full << std::endl;
+		std::cout << "Output file at: " << full_for_console << std::endl;
 	}
 
 }
