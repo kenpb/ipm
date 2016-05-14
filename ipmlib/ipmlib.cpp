@@ -9,12 +9,6 @@ namespace Interop = System::Runtime::InteropServices;
 
 namespace ipmlib {
 
-	// TODO:
-	// - Handle errors, AddTree should throw exception on failure?
-	// - Get a better way to calculate the progress and chunks.
-	// - Bad code is bad.
-	// - C# should validate the paths.
-	// - Does it even work?, no allocation of BSTR may cause trouble in x64.
 	void ipm::CreateISO(System::String^ path, System::String^ outpath) {
 		// get the iso name, use the folder name as the out file
 		auto separators = gcnew array<System::Char>{'\\', '/'};
