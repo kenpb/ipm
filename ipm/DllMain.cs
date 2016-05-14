@@ -11,21 +11,23 @@ namespace ipm
 
         [Parameter(Position = 0, Mandatory = true)]
         public string path;
+        [Parameter(Position = 1, Mandatory = false)]
+        public string outpath;
         
-        private void Start()
+        private void Start(string path, string outpath)
         {
-            iso.createISO(this.path);
+            iso.CreateISO(path, outpath);
         }
 
         private int GetProgress()
         {
-            return iso.getProgress();
+            return iso.GetProgress();
         }
 
         protected override void ProcessRecord()
         {
             var myprogress = new ProgressRecord(1, "Creating: " + this.path + ".iso", "Progress:");
-            var isothread = new Thread(Start);
+            var isothread = new Thread(() => Start(this.path, this.outpath));
             isothread.Start();
 
             Console.WriteLine("Reading Target directory...");

@@ -4,24 +4,48 @@
 
 #include "ipmlib.h"
 
+// Avoid STATSTG confusion losing itself in space and time, I should look into it... maybe later...
+namespace Interop = System::Runtime::InteropServices;
+
 namespace ipmlib {
 
 	// TODO:
-	// - Handle errors.
+	// - Handle errors, AddTree should throw exception on failure?
 	// - Get a better way to calculate the progress and chunks.
-	void ipm::createISO(System::String^ path) {
-		msclr::interop::marshal_context context;
-		auto std_path = context.marshal_as<std::string>(path);
-		auto full_for_console = std_path + ISO_EXT;
-		slashReplace(std_path);
-		auto std_isoName = getISOName(std_path);
-		auto std_full = std_path + ISO_EXT;
+	// - Bad code is bad.
+	// - C# should validate the paths.
+	// - Does it even work?, no allocation of BSTR may cause trouble in x64.
+	void ipm::CreateISO(System::String^ path, System::String^ outpath) {
+		// get the iso name, use the folder name as the out file
+		auto separators = gcnew array<System::Char>{'\\', '/'};
+		auto aux1 = path->TrimEnd(separators);
+		array<System::String^>^ path_array = aux1->Split(separators, System::StringSplitOptions::RemoveEmptyEntries);
+		auto isoname_str = static_cast<System::String^>(path_array->GetValue(path_array->Length - 1)) + ".iso";
+		System::IntPtr isoname_ip = Interop::Marshal::StringToBSTR(isoname_str);
+		// create the BSTR from the pointer
+		BSTR bstr_isoName = static_cast<BSTR>(isoname_ip.ToPointer()); 
+		// fix pointer to avoid garbage collection
+		pin_ptr<BSTR> b_isoName = &bstr_isoName;
+		//Interop::Marshal::FreeBSTR(path_ip); // free the bstr
 
-		CString cstring_path = std_path.c_str(); // needed for allocsysstring
-		BSTR bstr_path = cstring_path.AllocSysString(); // alloc bstr
+		// get the full path in bstr
+		// get the trimmed path string
+		System::IntPtr path_ip = Interop::Marshal::StringToBSTR(aux1);
+		// create the BSTR from the pointer
+		BSTR bstr_path = static_cast<BSTR>(path_ip.ToPointer());
+		// fix pointer to avoid garbage collection
+		pin_ptr<BSTR> b_path = &bstr_path;
+		//Interop::Marshal::FreeBSTR(path_ip); // free the bstr
 
-		CString cstring_isoName = std_isoName.c_str(); // needed for allocsysstring
-		BSTR bstr_isoName = cstring_isoName.AllocSysString(); // alloc bstr
+		char* outpath_full;
+		// out put file path in case of outpath specified
+		if (!System::String::IsNullOrEmpty(outpath)) {
+			// delete separator if exists, well add it again, but better make sure
+			auto aux2 = outpath->TrimEnd(separators);
+			outpath_full = (char*)Interop::Marshal::StringToHGlobalAnsi(outpath + separators->GetValue(0) + isoname_str).ToPointer();
+		} else {
+			outpath_full = (char*)Interop::Marshal::StringToHGlobalAnsi(aux1 + separators->GetValue(0) + isoname_str).ToPointer();
+		}
 
 		CoInitialize(NULL);
 
@@ -47,10 +71,9 @@ namespace ipmlib {
 
 		char* data = new char[(int)stg.cbSize.QuadPart];
 		float chunksize = (float)stg.cbSize.QuadPart / 100;
-		fopen_s(&f, std_full.c_str(), "wb");
+		fopen_s(&f, outpath_full, "wb");
 
-		while (!r_i->Read(data, (ULONGLONG)chunksize, &size)) // do real calculation ffs
-		{
+		while (!r_i->Read(data, (ULONGLONG)chunksize, &size)) { // do real calculation ffs
 			if (size != 0) {
 				fwrite(data, size, 1, f);
 				if (progress != 100) {
@@ -70,7 +93,7 @@ namespace ipmlib {
 
 		CoUninitialize();
 
-		std::cout << "Output file at: " << full_for_console << std::endl;
+		System::Console::WriteLine("Output file at: {0}", aux1 + "/" + isoname_str + ".iso");
 	}
 
 }
