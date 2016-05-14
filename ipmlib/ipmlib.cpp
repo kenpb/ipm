@@ -20,7 +20,6 @@ namespace ipmlib {
 		BSTR bstr_isoName = static_cast<BSTR>(isoname_ip.ToPointer()); 
 		// fix pointer to avoid garbage collection
 		pin_ptr<BSTR> b_isoName = &bstr_isoName;
-		//Interop::Marshal::FreeBSTR(path_ip); // free the bstr
 
 		// get the full path in bstr
 		// get the trimmed path string
@@ -29,7 +28,6 @@ namespace ipmlib {
 		BSTR bstr_path = static_cast<BSTR>(path_ip.ToPointer());
 		// fix pointer to avoid garbage collection
 		pin_ptr<BSTR> b_path = &bstr_path;
-		//Interop::Marshal::FreeBSTR(path_ip); // free the bstr
 
 		char* outpath_full;
 		// out put file path in case of outpath specified
@@ -88,6 +86,9 @@ namespace ipmlib {
 		CoUninitialize();
 
 		System::Console::WriteLine("Output file at: {0}", aux1 + "/" + isoname_str + ".iso");
+
+		Interop::Marshal::FreeBSTR(isoname_ip);
+		Interop::Marshal::FreeBSTR(path_ip);
 	}
 
 }
