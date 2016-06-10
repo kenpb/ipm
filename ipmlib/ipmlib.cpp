@@ -85,7 +85,7 @@ namespace ipmlib {
 
 		CoUninitialize();
 
-		System::Console::WriteLine("Output file at: {0}", aux1 + "/" + isoname_str + ".iso");
+		System::Console::WriteLine("Output file at: {0}", aux1 + "/" + isoname_str);
 
 		Interop::Marshal::FreeBSTR(isoname_ip);
 		Interop::Marshal::FreeBSTR(path_ip);
